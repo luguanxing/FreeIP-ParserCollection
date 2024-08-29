@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Log4j2
-public class Combiner {
+public class Runner {
 
     public static void main(String[] args) {
         // read & parse input arguments
