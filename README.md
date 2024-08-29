@@ -19,10 +19,11 @@ The FreeIPParsers-Combiner project was initiated to address these challenges. Th
 1. 支持对免费IP解析器的灵活扩展，只需要实现”抽取ipData“接口和"解析ipData"两个接口以及返回一个接口的”支持字段列表“即可扩展
 2. 查询时只需要的”字段列表“和对应ip即可
 3. 实现了线程池实现查询，内含自动重试和休眠，以及原始数据文件的读入和解析文件的输出
+<br/>
 
-Flexible Expansion of Free IP Parsers: The project supports the flexible expansion of free IP parsers. You can extend the project simply by implementing two interfaces: "fetchIpData" and "parseIpData," and by returning a "supported fields list" for the interface.
-Field-Based Querying: Queries only require the "fields list" and the corresponding IP address, making the process straightforward and efficient.
-Thread Pool Implementation: The project includes a thread pool for handling queries, featuring automatic retry and sleep mechanisms, as well as the ability to read raw data files and output parsed files.
+1. Flexible Expansion of Free IP Parsers: The project supports the flexible expansion of free IP parsers. You can extend the project simply by implementing two interfaces: "fetchIpData" and "parseIpData," and by returning a "supported fields list" for the interface.
+2. Field-Based Querying: Queries only require the "fields list" and the corresponding IP address, making the process straightforward and efficient.
+3. Thread Pool Implementation: The project includes a thread pool for handling queries, featuring automatic retry and sleep mechanisms, as well as the ability to read raw data files and output parsed files.
 
 
 <br/><br/><br/>
