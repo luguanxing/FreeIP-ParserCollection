@@ -36,8 +36,9 @@ public class IpSbParser implements IpParser {
 
     @Override
     public JSONObject fetchIpData(String ip) {
+        String ipApiUrl = API_URL + ip;
         try {
-            URL url = new URL(API_URL + ip);
+            URL url = new URL(ipApiUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(5 * 1000);
             conn.setReadTimeout(5 * 1000);
@@ -57,7 +58,7 @@ public class IpSbParser implements IpParser {
                 return new JSONObject(builder.toString());
             }
         } catch (Exception e) {
-            log.error("Failed to extract JSON object from " + API_URL, e);
+            log.error("Failed to extract JSON object from " + ipApiUrl, e);
         }
         return null;
     }

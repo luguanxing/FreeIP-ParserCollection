@@ -13,10 +13,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ExecutorUtil {
 
     /**
-     * Creates a thread pool where each thread runs an IpParser. Each IP is processed by a randomly chosen parser.
-     * If parsing fails, it retries up to 3 times. The results are stored in a thread-safe list.
-     * 线程池里只有固定个数个parser，对每个ip抽取parser，
-     * 抽中后加锁，若失败重新抽取parser，最多抽3次
+     * Creates a thread pool where each thread runs an IpParser. Each IP is processed by a parser fetched from a
+     * thread-safe queue. If parsing fails, it retries up to 3 times. The results are stored in a thread-safe list.
+     * 将 IpParser 实例放入一个线程安全的队列中，每个线程可以从队列中取出一个 IpParser 实例进行处理，
+     * 处理完成后再将 IpParser 实例放回队列。这样可以避免多个线程竞争同一个 IpParser 实例，从而提高执行效率
      *
      * @param ipList       the list of IPs to be processed
      * @param parserList   the list of IpParser instances to be used
@@ -26,13 +26,9 @@ public class ExecutorUtil {
     public static List<IpInfo> runParsers(List<String> ipList, List<IpParser> parserList, int sleepSeconds) {
         ConcurrentLinkedQueue<IpInfo> resultList = new ConcurrentLinkedQueue<>();
 
-        // Create a lock for each parser
-        List<ReentrantLock> locks = new ArrayList<>();
-        for (int i = 0; i < parserList.size(); i++) {
-            locks.add(new ReentrantLock());
-        }
+        // Create a blocking queue for the parsers
+        BlockingQueue<IpParser> parserQueue = new LinkedBlockingQueue<>(parserList);
 
-        // each thread competes for any parser
         ExecutorService executorService = Executors.newFixedThreadPool(parserList.size());
         for (String ip : ipList) {
             executorService.submit(() -> {
@@ -40,21 +36,29 @@ public class ExecutorUtil {
                 int attempts = 0;
 
                 while (!success && attempts < 3) {
-                    int parserIndex = ThreadLocalRandom.current().nextInt(parserList.size());
-                    IpParser parser = parserList.get(parserIndex);
-                    ReentrantLock lock = locks.get(parserIndex);
-
-                    // Blocking until the lock is acquired
+                    IpParser parser = null;
                     try {
-                        lock.lock();
+                        // Fetch a parser from safe queue and wait until successful
+                        parser = parserQueue.take();
+                        // Use the parser to get the IP info
                         log.info(ip + " uses Parser => " + parser.getClass().getName());
                         IpInfo info = parser.getIpInfo(ip);
                         if (info != null) {
                             resultList.add(info);
                             success = true;
                         }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
                     } finally {
-                        lock.unlock();
+                        if (parser != null) {
+                            // Put the parser back into the safe queue
+                            try {
+                                parserQueue.put(parser);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
                     }
 
                     // Sleep after each attempt
@@ -65,7 +69,7 @@ public class ExecutorUtil {
                         break;
                     }
                     if (!success) {
-                        log.info(ip + "[" + attempts + "] failed with Parser => " + parser.getClass().getName());
+                        log.info(ip + "[" + attempts + "] failed with Parser => " + (parser != null ? parser.getClass().getName() : "null"));
                         attempts++;
                     }
                 }
