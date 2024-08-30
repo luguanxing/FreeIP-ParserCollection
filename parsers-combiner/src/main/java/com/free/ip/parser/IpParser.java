@@ -36,7 +36,11 @@ public interface IpParser {
      * @return an IpInfo object if successful, null otherwise
      */
     default IpInfo getIpInfo(String ip) {
-        return parseIpData(fetchIpData(ip));
+        JSONObject ipData = fetchIpData(ip);
+        if (ipData == null) {
+            return null;
+        }
+        return parseIpData(ipData);
     }
 
 }

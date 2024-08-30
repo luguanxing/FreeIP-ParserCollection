@@ -64,9 +64,6 @@ public class IpSbParser implements IpParser {
 
     @Override
     public IpInfo parseIpData(JSONObject json) {
-        if (json == null) {
-            return null;
-        }
         return new IpInfo(
                 json.optString("ip"),
                 json.optString("country"),
