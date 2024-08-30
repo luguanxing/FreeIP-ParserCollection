@@ -1,8 +1,8 @@
 # 背景 Background
-**免费就是硬道理！** 在互联网上，免费IP解析资源资源具有不可替代的重要性，但在需要处理大量数据时，选择付费服务可能会带来不小的成本压力。
+**免费就是硬道理！** 在互联网上，[免费IP解析资源](https://github.com/ihmily/ip-info-api)具有不可替代的重要性，但在需要处理大量数据时，选择付费服务可能会带来不小的成本压力。
 然而，免费IP解析服务通常存在一些缺点，例如返回的数据字段不完全统一，以及各类使用限制（例如每日调用次数限制等）。
 
-**Free is justice!** On the internet, free IP parsing resources are of irreplaceable importance, especially when dealing with large volumes of data, where opting for paid services can lead to significant cost pressures. However, free IP parsing services often come with certain drawbacks, such as inconsistencies in the returned data fields and various usage limitations (e.g., daily call limits).
+**Free is justice!** On the internet, [free IP parsing resources](https://github.com/ihmily/ip-info-api) are of irreplaceable importance, especially when dealing with large volumes of data, where opting for paid services can lead to significant cost pressures. However, free IP parsing services often come with certain drawbacks, such as inconsistencies in the returned data fields and various usage limitations (e.g., daily call limits).
 
 <br/><br/><br/>
 
@@ -46,14 +46,98 @@ public interface IpParser {
     IpInfo parseIpData(JSONObject json);
 
     default IpInfo getIpInfo(String ip) {
-        return parseIpData(fetchIpData(ip));
+        JSONObject ipData = fetchIpData(ip);
+        if (ipData == null) {
+            return null;
+        }
+        return parseIpData(ipData);
     }
+
+}
+
+```
+
+<br/><br/>
+
+一个具体的Parser实现例子：
+
+An example of implementation of Parser:
+
+```
+@Log4j2
+public class IpSbParser implements IpParser {
+
+    public static final String API_URL = "https://api.ip.sb/geoip/";
+
+    @Override
+    public Set<IpinfoEnum> getSupportedFields() {
+        return new HashSet<>(Arrays.asList(
+                IpinfoEnum.IP,
+                IpinfoEnum.COUNTRY,
+                IpinfoEnum.COUNTRY_CODE,
+                IpinfoEnum.REGION,
+                IpinfoEnum.REGION_CODE,
+                IpinfoEnum.CITY,
+                IpinfoEnum.ISP,
+                IpinfoEnum.LATITUDE,
+                IpinfoEnum.LONGITUDE
+        ));
+    }
+
+    @Override
+    public JSONObject fetchIpData(String ip) {
+        try {
+            URL url = new URL(API_URL + ip);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(5 * 1000);
+            conn.setReadTimeout(5 * 1000);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod("GET");
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                StringBuilder builder = new StringBuilder();
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+                for (String s = br.readLine(); s != null; s = br.readLine()) {
+                    builder.append(s);
+                }
+                br.close();
+                return new JSONObject(builder.toString());
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract JSON object from " + API_URL, e);
+        }
+        return null;
+    }
+
+    @Override
+    public IpInfo parseIpData(JSONObject json) {
+        return new IpInfo(
+                json.optString("ip"),
+                json.optString("country"),
+                json.optString("country_code"),
+                json.optString("region"),
+                json.optString("region_code"),
+                json.optString("city"),
+                json.optString("isp"),
+                json.optDouble("latitude"),
+                json.optDouble("longitude")
+        );
+    }
+
 }
 ```
 
-使用的示例代码如下：
 
-The example usage code is as follows:
+
+<br/><br/>
+
+
+使用IP解析的示例代码如下：
+
+The example usage code of parsing IPs is as follows:
 
 ```
 List<String> ipList = InoutUtil.readIpFile("/data/ips.txt");
