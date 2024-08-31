@@ -75,7 +75,7 @@ public class Ip_ApiParser implements IpParser {
             return null;
         }
         return new IpInfo(
-                json.optString("ip"),
+                json.optString("query"),
                 json.optString("country"),
                 json.optString("countryCode"),
                 json.optString("regionName"),
