@@ -15,7 +15,9 @@ public class TestParser {
 
     @Test
     public void testSingleParser() {
-
+        log.info(new com.free.ip.parser.impl.Ip_ApiParser().getIpInfo("67.189.89.89"));
+        log.info(new com.free.ip.parser.impl.Ip_ApiParser().getIpInfo("113.116.246.117"));
+        log.info(new com.free.ip.parser.impl.Ip_ApiParser().getIpInfo("122.13.25.57"));
     }
 
     @Test
