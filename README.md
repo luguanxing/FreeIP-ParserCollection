@@ -17,11 +17,11 @@ The FreeIPParsers-Combiner project was initiated to address these challenges. Th
 
 # 项目特点 Project Features
 1. 支持对免费IP解析器的灵活扩展，只需要实现”抽取ipData“接口和"解析ipData"两个接口以及返回一个接口的”支持字段列表“即可扩展
-2. 实现了线程安全的解析池，内含自动重试和休眠，对每个解析失败IP的多次重试，以及移除多次连续失败的解析器
+2. 实现了线程安全的解析池，内含自动调度机制，对每个解析失败IP的多次重试，以及移除多次连续失败的解析器
 <br/>
 
 1. Supports flexible extension of free IP parsers. To extend, you only need to implement the "extract ipData" interface and the "parse ipData" interface, as well as return a "supported fields list" interface.
-2. Implemented a thread-safe parsing pool that includes automatic retries and sleep mechanisms. It retries multiple times for each failed IP parsing and removes parsers that fail consecutively several times.
+2. Implemented a thread-safe parsing pool with an automatic scheduling mechanism, including multiple retries for each failed IP parsing and the removal of parsers that fail consecutively multiple times.
 
 
 <br/><br/><br/>
