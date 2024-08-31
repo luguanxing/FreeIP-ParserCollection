@@ -31,7 +31,7 @@ public class TestRunner {
                 IpinfoEnum.CITY
         ));
         System.err.println("conditionalParsers.size()=" + conditionalParsers.size());
-        List<IpInfo> ipInfos = ExecutorUtil.runParsers(ipList, conditionalParsers, 1);
+        List<IpInfo> ipInfos = ExecutorUtil.runParsers(ipList, conditionalParsers, 5);
         for (IpInfo ipInfo : ipInfos) {
             log.info(ipInfo);
         }

@@ -7,10 +7,15 @@ import lombok.extern.log4j.Log4j2;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Log4j2
 public class ExecutorUtil {
+
+    public static final int EACH_IP_ATTEMPTS = 5;
+
+    public static final int EACH_PARSER_ATTEMPTS = 3;
 
     /**
      * Creates a thread pool where each thread runs an IpParser. Each IP is processed by a parser fetched from a
@@ -29,14 +34,22 @@ public class ExecutorUtil {
         // Create a blocking queue for the parsers
         BlockingQueue<IpParser> parserQueue = new LinkedBlockingQueue<>(parserList);
 
+        // Map to track the consecutive failure count for each parser
+        ConcurrentHashMap<IpParser, Integer> failureCountMap = new ConcurrentHashMap<>();
+
+        // Counter to track the number of failed parsers
+        AtomicInteger failedParsersCount = new AtomicInteger(0);
+
         ExecutorService executorService = Executors.newFixedThreadPool(parserList.size());
         for (String ip : ipList) {
             executorService.submit(() -> {
                 boolean success = false;
                 int attempts = 0;
 
-                while (!success && attempts < 3) {
+                while (!success && attempts < EACH_IP_ATTEMPTS) {
                     IpParser parser = null;
+                    IpParser lastParser = null;
+                    int parserFailures = 0;
                     try {
                         // Fetch a parser from safe queue and wait until successful
                         parser = parserQueue.take();
@@ -44,33 +57,60 @@ public class ExecutorUtil {
                         log.info(ip + " uses Parser => " + parser.getClass().getName());
                         IpInfo info = parser.getIpInfo(ip);
                         if (info != null) {
-                            resultList.add(info);
                             success = true;
+                            resultList.add(info);
+                            failureCountMap.put(parser, 0);
+                        } else {
+                            throw new RuntimeException("Parser returned null");
                         }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        break;
+                    } catch (Exception e) {
+                        log.info(ip + "[" + attempts + "] failed with Parser => " + parser.getClass().getName());
+                        attempts++;
+                        success = false;
+                        // Increment failure count
+                        parserFailures = failureCountMap.getOrDefault(parser, 0) + 1;
+                        failureCountMap.put(parser, parserFailures);
                     } finally {
+                        lastParser = parser;
+
+                        // Exceeding threshold, discard parser
+                        if (parserFailures >= EACH_PARSER_ATTEMPTS) {
+                            log.error("Parser " + parser.getClass().getName() + " exceeded failure threshold and will be removed.");
+                            System.err.println("Parser " + parser.getClass().getName() + " exceeded failure threshold and will be removed.");
+                            // Increase the failed parsers count
+                            failedParsersCount.incrementAndGet();
+                            // discard the parser
+                            parser = null;
+                        }
+                        // Return the parser back to the queue if not null
                         if (parser != null) {
-                            // Put the parser back into the safe queue
                             try {
                                 parserQueue.put(parser);
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                             }
                         }
+                        // Check if all parsers are now unusable based on the failure count
+                        if (failedParsersCount.get() == parserList.size()) {
+                            log.error("All parsers have failed. Terminating.");
+                            executorService.shutdownNow();
+                        }
                     }
 
-                    // Sleep after each attempt
+                    // Sleep after each attempt no matter success or failure
+                    log.info(String.format(
+                            "IP Parse Summary => IP: %s | Attempt: %d | Result: %s | last Parser: %s | Sleeping for: %d seconds",
+                            ip,
+                            attempts,
+                            (success ? "SUCCESS" : "FAILURE"),
+                            (lastParser != null ? lastParser.getClass().getSimpleName() : "N/A"),
+                            sleepSeconds
+                    ));
                     try {
                         TimeUnit.SECONDS.sleep(sleepSeconds);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
-                    }
-                    if (!success) {
-                        log.info(ip + "[" + attempts + "] failed with Parser => " + (parser != null ? parser.getClass().getName() : "null"));
-                        attempts++;
                     }
                 }
             });

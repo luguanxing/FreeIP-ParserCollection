@@ -47,6 +47,13 @@ public class IpSbParser implements IpParser {
             conn.setUseCaches(false);
             conn.setInstanceFollowRedirects(false);
             conn.setRequestMethod("GET");
+
+            // add HTTP request header
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
+            conn.setRequestProperty("Connection", "keep-alive");
+
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
                 StringBuilder builder = new StringBuilder();
