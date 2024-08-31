@@ -14,6 +14,11 @@ import java.util.Set;
 public class TestParser {
 
     @Test
+    public void testSingleParser() {
+
+    }
+
+    @Test
     public void testParserAvailability() {
         String testIp = "113.116.246.117";
         String packageToScan = "com.free.ip.parser.impl";
