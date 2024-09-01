@@ -121,6 +121,11 @@ public class ExecutorUtil {
                         break;
                     }
                 }
+
+                if (!success) {
+                    log.error("parse failed too many times for IP: " + ip + ", terminating...");
+                    executorService.shutdownNow();
+                }
             });
         }
 
