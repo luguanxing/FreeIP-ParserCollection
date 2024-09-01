@@ -79,7 +79,7 @@ public class Ip_ApiParser implements IpParser {
                 json.optString("country"),
                 json.optString("countryCode"),
                 json.optString("regionName"),
-                json.optString("regionName"),
+                json.optString("region"),
                 json.optString("city"),
                 json.optString("isp"),
                 json.optDouble("lat"),
