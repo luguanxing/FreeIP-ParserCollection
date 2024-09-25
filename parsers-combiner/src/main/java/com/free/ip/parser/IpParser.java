@@ -40,7 +40,10 @@ public interface IpParser {
         if (ipData == null) {
             return null;
         }
-        return parseIpData(ipData);
+        IpInfo ipInfo = parseIpData(ipData);
+        ipInfo.setParserName(this.getClass().getSimpleName());
+        ipInfo.setParseTimeTs(System.currentTimeMillis());
+        return ipInfo;
     }
 
 }
